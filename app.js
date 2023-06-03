@@ -15,7 +15,8 @@ const mongoSanitize = require("express-mongo-sanitize");
 // const helmet = require("helmet");
 const ExpressError = require("./utils/ExpressError");
 const methodOverride = require("method-override");
-mongoose.connect("mongodb://127.0.0.1:27017/yelp-camp");
+
+const MongoStore = require("connect-mongo");
 
 const Campground = require("./models/campground");
 const Review = require("./models/review"); //error herree
@@ -25,6 +26,9 @@ const campgroundRoutes = require("./routes/campgrounds");
 const reviewRoutes = require("./routes/reviews");
 const userRoutes = require("./routes/users");
 const { propfind } = require("./routes/campgrounds");
+
+const dbUrl = "mongodb://127.0.0.1:27017/yelp-camp";
+mongoose.connect(dbUrl);
 
 const app = express();
 const db = mongoose.connection;
@@ -50,8 +54,25 @@ app.use(express.static(path.join(__dirname, "public"))); //for public directory
 //     contentSecurityPolicy: false,
 //   })
 // );
-app.use(mongoSanitize());
+app.use(
+  mongoSanitize({
+    replaceWith: "_",
+  })
+);
+
+const store = MongoStore.create({
+  mongoUrl: dbUrl,
+  touchAfter: 24 * 60 * 60,
+  crypto: {
+    secret: "thisshouldbeabettersecret",
+  },
+});
+
+store.on("error", (e) => {
+  console.log("SESSION STORE ERROR", e);
+});
 const sessionConfig = {
+  store,
   name: "session",
   secret: "thisshouldbeabettersecret",
   resave: false,
