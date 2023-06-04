@@ -27,8 +27,12 @@ const reviewRoutes = require("./routes/reviews");
 const userRoutes = require("./routes/users");
 const { propfind } = require("./routes/campgrounds");
 
-const dbUrl = "mongodb://127.0.0.1:27017/yelp-camp";
-mongoose.connect(dbUrl);
+const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017/yelp-camp";
+main().catch((err) => console.log("ERROR CONNECTING DATABASE!!", err));
+async function main() {
+  await mongoose.connect(dbUrl);
+  console.log("CONNECTED TO DATABASE!!");
+}
 
 const app = express();
 const db = mongoose.connection;
